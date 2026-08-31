@@ -1,0 +1,8 @@
+﻿node_modules/
+helpdesk-client/node_modules/
+helpdesk-server/node_modules/
+.env
+helpdesk-client/.env
+helpdesk-server/.env
+dist/
+build/
