@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/nodemon.json",
+  "//": "`.env` is listed explicitly: nodemon's default watcher only picks up *.js, so editing credentials (RESEND_API_KEY, MAIL_FROM) used to leave the running process holding the old, empty values.",
+  "watch": [
+    "server.js",
+    "app.js",
+    "socket.js",
+    "config",
+    "controllers",
+    "middleware",
+    "models",
+    "routes",
+    "services",
+    ".env"
+  ],
+  "ext": "js,json,env",
+  "ignore": ["node_modules", "knowledge", "ml/*.json", "scripts"],
+  "delay": 300
+}

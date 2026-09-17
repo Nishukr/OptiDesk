@@ -9,7 +9,7 @@ const User = require('../models/User');
 
 // Credentials come from .env if set, otherwise these safe local defaults.
 const NAME = process.env.ADMIN_NAME || 'Support Admin';
-const EMAIL = (process.env.ADMIN_EMAIL || 'admin@helpdesk.local').toLowerCase();
+const EMAIL = (process.env.ADMIN_EMAIL || 'admin@optidesk.local').toLowerCase();
 const PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 async function seedAdmin() {
@@ -19,9 +19,19 @@ async function seedAdmin() {
 
   // Upsert: if this email already exists, promote it to admin and reset the password;
   // otherwise create a fresh admin. Safe to run more than once.
+  // isVerified is forced on: this account is created by you, so there is no
+  // inbox to check and it must be able to log in immediately.
   const admin = await User.findOneAndUpdate(
     { email: EMAIL },
-    { name: NAME, email: EMAIL, passwordHash, role: 'admin' },
+    {
+      name: NAME,
+      email: EMAIL,
+      passwordHash,
+      role: 'admin',
+      isVerified: true,
+      verifiedAt: new Date(),
+      $unset: { verifyTokenHash: '', verifyTokenExpires: '' },
+    },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
 

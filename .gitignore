@@ -6,3 +6,8 @@ helpdesk-client/.env
 helpdesk-server/.env
 dist/
 build/
+
+# Rendered Mermaid PNGs + the .docx converter's working files.
+# The script itself is worth keeping; the images it produces are not.
+.docxbuild/diagrams/
+**/.env*

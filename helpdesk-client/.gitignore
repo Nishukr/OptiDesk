@@ -1,5 +1,12 @@
 node_modules/
 dist/
+
+# .env holds no secrets now (VITE_* is public by definition), but *.local files
+# are personal overrides and must never be committed. .env.development and
+# .env.production ARE tracked on purpose: the API URL belongs in the repo.
 .env
+.env.local
+.env.*.local
+
 *.log
 .DS_Store

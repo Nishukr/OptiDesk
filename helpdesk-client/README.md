@@ -1,6 +1,6 @@
-# AI Helpdesk — Frontend (React + Vite)
+# OptiDesk — Frontend (React + Vite)
 
-The customer/agent web app for the AI Customer-Support Helpdesk. It talks to the
+The customer/agent web app for **OptiDesk**, the AI customer-support helpdesk. It talks to the
 `helpdesk-server` Express API for auth, tickets, live updates, and (Phase 5) the
 RAG chat endpoint.
 

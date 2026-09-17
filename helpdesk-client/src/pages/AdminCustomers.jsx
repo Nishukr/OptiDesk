@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import CustomerCell from '../components/CustomerCell';
+import DataTable from '../components/DataTable';
 import { fmtDay } from '../utils/format';
 
 export default function AdminCustomers() {
@@ -13,7 +14,7 @@ export default function AdminCustomers() {
 
   useEffect(() => {
     api
-      .get('/users/customers')
+      .get('/admin/customers')
       .then((res) => setCustomers(res.data))
       .catch((err) => setError(err.response?.data?.error || 'Failed to load customers'))
       .finally(() => setLoading(false));
@@ -29,6 +30,38 @@ export default function AdminCustomers() {
     );
   }, [customers, q]);
 
+  const columns = [
+    {
+      key: 'customer',
+      header: 'Customer',
+      mobile: 'title',
+      cell: (c) => <CustomerCell customer={c} />,
+    },
+    { key: 'tickets', header: 'Tickets', cell: (c) => c.ticketCount },
+    {
+      key: 'open',
+      header: 'Open',
+      cell: (c) =>
+        c.openCount > 0 ? (
+          <span className="chip chip-open">{c.openCount}</span>
+        ) : (
+          <span className="muted">0</span>
+        ),
+    },
+    {
+      key: 'last',
+      header: 'Last ticket',
+      tdClass: 'muted small nowrap',
+      cell: (c) => fmtDay(c.lastTicketAt),
+    },
+    {
+      key: 'joined',
+      header: 'Joined',
+      tdClass: 'muted small nowrap',
+      cell: (c) => fmtDay(c.createdAt),
+    },
+  ];
+
   return (
     <div className="container wide">
       <div className="card">
@@ -39,29 +72,27 @@ export default function AdminCustomers() {
 
         {error && <div className="alert">{error}</div>}
         <div className="filters">
-          <input className="search" placeholder="Search name or email…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input
+            className="search"
+            placeholder="Search name or email…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            aria-label="Search customers"
+          />
         </div>
 
-        <table className="table">
-          <thead>
-            <tr><th>Customer</th><th>Tickets</th><th>Open</th><th>Last ticket</th><th>Joined</th></tr>
-          </thead>
-          <tbody>
-            {shown.map((c) => (
-              <tr key={c._id}>
-                <td><CustomerCell customer={c} /></td>
-                <td>{c.ticketCount}</td>
-                <td>{c.openCount > 0 ? <span className="chip chip-open">{c.openCount}</span> : <span className="muted">0</span>}</td>
-                <td className="muted small nowrap">{fmtDay(c.lastTicketAt)}</td>
-                <td className="muted small nowrap">{fmtDay(c.createdAt)}</td>
-              </tr>
-            ))}
-            {loading && <tr><td colSpan={5} className="muted center">Loading…</td></tr>}
-            {!loading && shown.length === 0 && (
-              <tr><td colSpan={5} className="muted center">No customers found.</td></tr>
-            )}
-          </tbody>
-        </table>
+        <DataTable
+          label="Customers"
+          columns={columns}
+          rows={shown}
+          rowKey={(c) => c._id}
+          loading={loading}
+          empty={
+            <div className="empty">
+              <span className="empty-icon">🙋</span>No customers found.
+            </div>
+          }
+        />
       </div>
     </div>
   );

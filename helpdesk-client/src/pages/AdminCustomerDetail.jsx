@@ -2,7 +2,36 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api/axios';
+import DataTable from '../components/DataTable';
 import { fmtDate, fmtDay, initials, statusLabel } from '../utils/format';
+
+const COLUMNS = [
+  {
+    key: 'subject',
+    header: 'Subject',
+    mobile: 'title',
+    cell: (t) => <Link to={`/admin/tickets/${t._id}`}>{t.subject}</Link>,
+  },
+  { key: 'category', header: 'Category', cell: (t) => t.category },
+  {
+    key: 'priority',
+    header: 'Priority',
+    mobile: 'badge',
+    cell: (t) => <span className={`pill pill-${t.priority}`}>{t.priority}</span>,
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    mobile: 'badge',
+    cell: (t) => <span className={`chip chip-${t.status}`}>{statusLabel(t.status)}</span>,
+  },
+  {
+    key: 'created',
+    header: 'Raised',
+    tdClass: 'muted small nowrap',
+    cell: (t) => fmtDate(t.createdAt),
+  },
+];
 
 export default function AdminCustomerDetail() {
   const { id } = useParams();
@@ -12,7 +41,7 @@ export default function AdminCustomerDetail() {
   useEffect(() => {
     let alive = true;
     api
-      .get(`/users/${id}`)
+      .get(`/admin/customers/${id}`)
       .then((res) => alive && setData(res.data))
       .catch((err) => alive && setError(err.response?.data?.error || 'Failed to load customer'));
     return () => {
@@ -45,27 +74,20 @@ export default function AdminCustomerDetail() {
         </div>
       </div>
 
-      <div className="card" style={{ marginTop: 20 }}>
+      <div className="card">
         <h2>Tickets from this customer</h2>
-        <table className="table">
-          <thead>
-            <tr><th>Subject</th><th>Category</th><th>Priority</th><th>Status</th><th>Raised</th></tr>
-          </thead>
-          <tbody>
-            {tickets.map((t) => (
-              <tr key={t._id}>
-                <td><Link to={`/admin/tickets/${t._id}`}>{t.subject}</Link></td>
-                <td>{t.category}</td>
-                <td><span className={`pill pill-${t.priority}`}>{t.priority}</span></td>
-                <td><span className={`chip chip-${t.status}`}>{statusLabel(t.status)}</span></td>
-                <td className="muted small nowrap">{fmtDate(t.createdAt)}</td>
-              </tr>
-            ))}
-            {tickets.length === 0 && (
-              <tr><td colSpan={5} className="muted center">This customer hasn’t raised any tickets yet.</td></tr>
-            )}
-          </tbody>
-        </table>
+        <DataTable
+          label="Tickets from this customer"
+          columns={COLUMNS}
+          rows={tickets}
+          rowKey={(t) => t._id}
+          empty={
+            <div className="empty">
+              <span className="empty-icon">🎫</span>
+              This customer hasn’t raised any tickets yet.
+            </div>
+          }
+        />
       </div>
     </div>
   );

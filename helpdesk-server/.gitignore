@@ -1,5 +1,11 @@
 node_modules/
-.env
+
+# Every .env variant is secret — .env.bak, .env.local, .env.production too.
+# A bare ".env" line would not have covered those, so a backup copy of your
+# credentials could be committed by accident.
+.env*
+!.env.example
+
 ml/*.json
 *.log
 .DS_Store

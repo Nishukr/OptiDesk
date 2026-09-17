@@ -1,8 +1,17 @@
-// src/context/AuthContext.jsx — holds the logged-in user + auth actions
+// src/context/AuthContext.jsx — holds the signed-in STAFF user + auth actions.
+//
+// Agents and admins only. Customers are signed in by Clerk and their local record
+// comes from CustomerContext; nothing here reads or writes a Clerk session, and
+// the token below is the custom JWT from POST /api/auth/login.
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
+
+// POST /auth/login answers { id, ... } while GET /auth/me answers a Mongoose
+// document, i.e. { _id, ... }. Anything comparing the signed-in user against a
+// record's owner needs one shape, or the check silently fails after a reload.
+const normalize = (u) => (u ? { ...u, id: String(u.id || u._id) } : null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -17,7 +26,7 @@ export function AuthProvider({ children }) {
     }
     api
       .get('/auth/me')
-      .then((res) => setUser(res.data))
+      .then((res) => setUser(normalize(res.data)))
       .catch(() => localStorage.removeItem('token'))
       .finally(() => setLoading(false));
   }, []);
@@ -25,15 +34,21 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
     localStorage.setItem('token', res.data.token);
-    setUser(res.data.user);
-    return res.data.user;
+    const me = normalize(res.data.user);
+    setUser(me);
+    return me;
   };
 
-  // `role` is what the visitor picked on the register form ("customer" | "admin").
-  // Registering as admin also needs the code the server checks against ADMIN_SIGNUP_CODE.
-  const register = async (name, email, password, role = 'customer', adminCode) => {
-    await api.post('/auth/register', { name, email, password, role, adminCode });
-    return login(email, password); // auto-login after registering
+  // Staff only — the server refuses role "customer" here and points at Clerk, so
+  // `role` is effectively always "admin" and needs the code it checks against
+  // ADMIN_SIGNUP_CODE.
+  //
+  // We deliberately do NOT log in afterwards: the new account is unverified, so
+  // /auth/login would answer 403 anyway. The caller gets { needsVerification,
+  // emailSent } and sends the person to the "check your inbox" screen.
+  const register = async (name, email, password, role = 'admin', adminCode) => {
+    const res = await api.post('/auth/register', { name, email, password, role, adminCode });
+    return res.data;
   };
 
   const logout = () => {

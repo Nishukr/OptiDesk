@@ -1,13 +1,33 @@
-// controllers/userController.js — staff-only views of the people behind the tickets.
-// Customers must never reach these routes (see routes/userRoutes.js).
+// controllers/userController.js — staff-only views of the people behind the tickets,
+// plus the signed-in customer's own profile.
+// Customers must never reach the staff views (see routes/adminRoutes.js).
 const User = require('../models/User');
 const Ticket = require('../models/Ticket');
 
-// GET /api/users/customers — every customer plus a summary of their tickets.
+// GET /api/me — the Clerk-authenticated customer's local record.
+//
+// The client needs the Mongo _id, not the Clerk id: ticket ownership is compared
+// against Ticket.user, so the UI cannot tell "is this my ticket?" from the Clerk
+// session alone. requireCustomer has already resolved and attached the document.
+exports.myProfile = (req, res) => {
+  const u = req.customer;
+  res.json({
+    _id: u._id,
+    id: String(u._id),
+    clerkId: u.clerkId,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    isVerified: u.isVerified,
+    createdAt: u.createdAt,
+  });
+};
+
+// GET /api/admin/customers — every customer plus a summary of their tickets.
 exports.listCustomers = async (req, res, next) => {
   try {
-    const customers = await User.find({ role: 'customer' })
-      .select('name email createdAt')
+    const customers = await User.find({ role: 'customer', deletedAt: { $exists: false } })
+      .select('name email createdAt clerkId')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -40,7 +60,7 @@ exports.listCustomers = async (req, res, next) => {
   }
 };
 
-// GET /api/users/agents — staff list, used by the "assign to" dropdown.
+// GET /api/admin/agents — staff list, used by the "assign to" dropdown.
 exports.listAgents = async (req, res, next) => {
   try {
     const agents = await User.find({ role: { $in: ['agent', 'admin'] } })
@@ -52,7 +72,7 @@ exports.listAgents = async (req, res, next) => {
   }
 };
 
-// GET /api/users/:id — one customer's profile plus their full ticket history.
+// GET /api/admin/customers/:id — one customer's profile plus their full ticket history.
 exports.getCustomer = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).select('-passwordHash');
