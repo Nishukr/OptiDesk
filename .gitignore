@@ -11,3 +11,8 @@ build/
 # The script itself is worth keeping; the images it produces are not.
 .docxbuild/diagrams/
 **/.env*
+# Ignore ALL .env files, including .env.production, .env.bak, etc. anywhere in the project
+**/.env*
+
+# Exception: Allow .env.example to upload so others know what variables are needed
+!**/.env.example
